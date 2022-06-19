@@ -10,28 +10,32 @@ load_dotenv()
 
 async def run(username, password, region):
     session = aiohttp.ClientSession()
-    data = {
-        'client_id': 'play-valorant-web-prod',
-        'nonce': '1',
-        'redirect_uri': 'https://playvalorant.com/opt_in',
-        'response_type': 'token id_token',
-    }
+    data ={
+            "client_id": "play-valorant-web-prod",
+            "nonce": "1",
+            "redirect_uri": "https://playvalorant.com/opt_in",
+            "response_type": "token id_token",
+            'scope': 'account openid',
+        }
     headers = {
-        "Accept": "*/*",
-        "User-Agent": username
-    }
+            'Content-Type': 'application/json',
+            'User-Agent': 'RiotClient/51.0.0.4429735.4381201 rso-auth (Windows;10;;Professional, x64)',
+            'Accept': 'application/json, text/plain, */*',
+        }
     try:
-        await session.post('https://auth.riotgames.com/api/v1/authorization', json=data, headers=headers)
+        r = await session.post('https://auth.riotgames.com/api/v1/authorization', json=data, headers=headers)
+        cookies = {}
+        cookies['cookie'] = {}
+        for cookie in r.cookies.items():
+            cookies['cookie'][cookie[0]] = str(cookie).split('=')[1].split(';')[0]
     except Exception as e:
         print(e)
-    data = {
-        'type': 'auth',
-        'username': username,
-        'password': password
-    }
+    data = {"type": "auth", "username": username, "password": password, "remember": True}
     try:
         async with session.put('https://auth.riotgames.com/api/v1/authorization', json=data, headers=headers) as r:
             data = await r.json()
+            for cookie in r.cookies.items():
+                cookies['cookie'][cookie[0]] = str(cookie).split('=')[1].split(';')[0]
         await session.close()
     except Exception as e:
         print(e)
