@@ -1,5 +1,6 @@
 from datetime import datetime
 import discord
+from discord import FFmpegPCMAudio
 import getHeader
 from discord.ext import tasks
 import getSkinOffers
@@ -9,7 +10,8 @@ import os
 from embedReplies import *
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet
-
+from gtts import gTTS
+import langid
 load_dotenv()
 KEY = (os.getenv('KEY')).encode('utf-8')
 TOKEN = (os.getenv('TOKEN'))
@@ -63,6 +65,27 @@ async def on_ready():
 	sendtoday.start()
 @client.event
 async def on_message(ctx):
+	if ctx.content.lower().startswith("+say"):
+		tt = discord.utils.get(client.voice_clients,guild=ctx.guild)
+		print(tt)
+		try:
+			data = ctx.content.split()
+			data = "".join(data[1:len(data)])
+			lang = langid.classify(data)[0]
+			myobj=gTTS(text=data,lang=lang,slow=True)
+			myobj.save("tt.mp3")
+			if tt is None:
+				data = ctx.content.split()
+				channel = ctx.author.voice.channel
+				voice = await channel.connect()
+				source = FFmpegPCMAudio('tt.mp3')
+				player = voice.play(source)
+			else:
+				source = FFmpegPCMAudio('tt.mp3')
+				player = tt.play(source)
+
+		except:
+			print("error")
 	"""Recieve msg to Discord and send Message"""
 	if ctx.author == client.user:
 		"""return nothing if msg is send by itself"""
